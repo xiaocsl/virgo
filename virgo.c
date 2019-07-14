@@ -24,6 +24,7 @@
 typedef struct {
 	HWND *windows;
 	unsigned count;
+	HWND focus_HWND;
 } Windows;
 
 typedef struct {
@@ -39,7 +40,6 @@ typedef struct {
 	unsigned current;
 	unsigned handle_hotkeys;
 	Windows desktops[NUM_DESKTOPS];
-	HWND focused[NUM_DESKTOPS];
 	Trayicon trayicon;
 	HWND pinned[NUM_PINNED];
 } Virgo;
@@ -334,16 +334,34 @@ static void virgo_move_to_desk(Virgo *v, unsigned desk)
 	ShowWindow(hwnd, SW_HIDE);
 }
 
+static HWND get_focus_HWND(){
+	HWND wnd;
+	DWORD SelfThreadId;
+	DWORD ForeThreadId;
+	wnd=GetForegroundWindow();
+	SelfThreadId=GetCurrentThreadId();
+	ForeThreadId=GetWindowThreadProcessId(wnd,NULL);
+	AttachThreadInput(ForeThreadId,SelfThreadId,TRUE);
+	wnd=GetFocus();
+	AttachThreadInput(ForeThreadId,SelfThreadId,FALSE);
+	return wnd;
+}
+
+static void set_focus(HWND wnd){
+	SetForegroundWindow(wnd);
+	SetFocus(wnd);
+}
+
 static void virgo_go_to_desk(Virgo *v, unsigned desk)
 {
 	if (v->current == desk) {
 		return;
 	}
+	(&v->desktops[v->current])->focus_HWND = get_focus_HWND();
 	virgo_update(v);
-	v->focused[v->current] = GetForegroundWindow();
-	windows_hide(&v->desktops[v->current]);
 	windows_show(&v->desktops[desk]);
-	SetForegroundWindow(v->focused[desk]);
+	windows_hide(&v->desktops[v->current]);
+	set_focus((&v->desktops[desk])->focus_HWND);
 	v->current = desk;
 	trayicon_set(&v->trayicon, v->current + 1);
 }

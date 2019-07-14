@@ -16,13 +16,13 @@ EXE=$(NAME).exe
 .PHONY: all clean
 all: $(EXE)
 $(EXE): $(OBJS) $(NAME).res
-	$(CC) -o $(EXE) $(OBJS) $(NAME).res -m$(ARCH) $(LDFLAGS)
+	gcc -o $(EXE) $(OBJS) $(NAME).res -m$(ARCH) $(LDFLAGS)
 	
 $(NAME).res: $(NAME).rc
 	windres -O coff -F $(WINDRES_ARCH) $(NAME).rc $(NAME).res 
 	
 .c.o:
-	$(CC) -o $@ $(CFLAGS) -m$(ARCH) -c $<
+	gcc -o $@ $(CFLAGS) -m$(ARCH) -c $<
 
 clean:
 	rm -f $(OBJS) $(EXE) $(NAME).res
